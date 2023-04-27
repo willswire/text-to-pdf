@@ -1,0 +1,8 @@
+name = "text-to-pdf-worker"
+main = "src/index.ts"
+compatibility_date = "2023-04-27"
+
+[[r2_buckets]]
+binding = 'PDF_BUCKET'
+bucket_name = 'pdf-bucket'
+preview_bucket_name = 'pdf-bucket'
