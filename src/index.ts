@@ -49,7 +49,7 @@ export default {
 			case 'POST':
 				try {
 					const filename = await createPDF(request, env);
-					return new Response(`Success! Your PDF is available at ${url.hostname}/${filename}\n`);
+					return new Response(`Success! Your PDF is available at ${url.protocol + "//" + url.hostname + "/" + filename}\n`);
 				} catch (error) {
 					return new Response('Failed to create PDF', { status: 500 });
 				}
