@@ -1,4 +1,4 @@
-# Cloudflare PDF Worker
+# Text-to-PDF Cloudflare Worker
 
 This is a Cloudflare Worker that allows you to create and retrieve PDFs using HTTP GET and POST requests. It uses the jsPDF library to create PDFs and the `uuid` library to generate unique names for each PDF. The PDFs are stored in an R2 bucket.
 
