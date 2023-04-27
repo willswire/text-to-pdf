@@ -1,20 +1,13 @@
 import { jsPDF } from "jspdf";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface Env {
-	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-	// MY_KV_NAMESPACE: KVNamespace;
-	//
-	// Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-	// MY_DURABLE_OBJECT: DurableObjectNamespace;
-	//
-	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
 	PDF_BUCKET: R2Bucket;
-	//
-	// Example binding to a Service. Learn more at https://developers.cloudflare.com/workers/runtime-apis/service-bindings/
-	// MY_SERVICE: Fetcher;
 }
 
-async function retrievePDF(filename: string, env: Env): Promise<Response> {
+async function retrievePDF(request: Request, env: Env): Promise<Response> {
+	const url = new URL(request.url);
+	const filename = url.pathname.slice(1)
 	const object = await env.PDF_BUCKET.get(filename);
 
 	if (object === null) {
@@ -30,11 +23,14 @@ async function retrievePDF(filename: string, env: Env): Promise<Response> {
 	});
 }
 
-async function createPDF(filename: string, content: string, env: Env): Promise<Response> {
+async function createPDF(request: Request, env: Env): Promise<string> {
 	const document = new jsPDF();
+	const content = await request.text();
 	document.text(content, 10, 10);
-	await env.PDF_BUCKET.put(filename, document.output("arraybuffer"));
-	return new Response(`${filename} saved successfully!`);
+	const value = document.output("arraybuffer");
+	const key = uuidv4() + '.pdf';
+	await env.PDF_BUCKET.put(key, value);
+	return key;
 }
 
 export default {
@@ -43,26 +39,14 @@ export default {
 		env: Env,
 		ctx: ExecutionContext
 	): Promise<Response> {
-		// const doc = new jsPDF();
-		// doc.text("Hello world!", 10, 10);
-		// const res = doc.output("arraybuffer")
-		// return new Response(res);
 		const url = new URL(request.url);
-		const filename = url.pathname.slice(1)
-		console.log(`${request.method} request made for ${filename}`)
-
-		if (filename.split('.').pop() !== 'pdf') {
-			return new Response('You must provide a filename ending in .pdf in the request URL', {
-				status: 400
-			})
-		}
 
 		switch (request.method) {
 			case 'POST':
-				const content =  await request.text();
-				return await createPDF(filename, content, env);
+				const filename = await createPDF(request, env);
+				return new Response(`Success! Your PDF is available at ${url.hostname}/${filename}\n`);
 			case 'GET':
-				return await retrievePDF(filename, env)
+				return await retrievePDF(request, env)
 			default:
 				return new Response('Method Not Allowed', {
 					status: 405,
