@@ -1,5 +1,4 @@
 import { jsPDF } from "jspdf";
-import { v4 as uuidv4 } from 'uuid';
 
 export interface Env {
 	PDF_BUCKET: R2Bucket;
@@ -32,7 +31,7 @@ async function createPDF(request: Request, env: Env): Promise<string> {
 		const content = await request.text();
 		pdfDocument.text(content, 10, 10);
 		const pdfArrayBuffer = pdfDocument.output("arraybuffer");
-		const pdfKey = `${uuidv4()}.pdf`;
+		const pdfKey = `${crypto.randomUUID()}.pdf`;
 		await env.PDF_BUCKET.put(pdfKey, pdfArrayBuffer);
 		return pdfKey;
 	} catch (error) {
